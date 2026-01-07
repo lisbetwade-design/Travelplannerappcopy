@@ -1,14 +1,103 @@
 # Oooff Travel Planner - Setup Instructions
 
 ## Overview
-Oooff is a travel planning app that helps you organize your time off and plan trips around bank holidays. The app uses localStorage to store multiple user accounts and their data locally in your browser.
+Oooff is a travel planning app that helps you organize your time off and plan trips around bank holidays. The app uses Supabase for authentication and data storage.
+
+## Prerequisites
+
+Before you begin, you'll need:
+- Node.js (v16 or higher)
+- A Supabase account (sign up at https://supabase.com)
+
+## Supabase Setup
+
+### 1. Create a Supabase Project
+
+1. Go to https://app.supabase.com
+2. Click "New Project"
+3. Choose your organization and fill in project details
+4. Wait for your project to be created (this takes a few minutes)
+
+### 2. Get Your API Keys
+
+1. Go to your project settings (gear icon in the sidebar)
+2. Click "API" in the settings menu
+3. Copy the following values:
+   - **Project URL** (e.g., https://xxxxx.supabase.co)
+   - **anon/public key** (This is your SUPABASE_ANON_KEY)
+
+### 3. Set Up Database Tables
+
+1. In your Supabase project, click "SQL Editor" in the sidebar
+2. Click "New Query"
+3. Copy the contents of `supabase/migrations/20240104_create_tables.sql`
+4. Paste into the SQL editor and click "Run"
+5. Verify tables were created by clicking "Table Editor" - you should see `users`, `trips`, and `time_off` tables
+
+### 4. Deploy the Edge Function (Backend Server)
+
+The backend API server is located in `supabase/functions/server/`. You need to deploy it as a Supabase Edge Function:
+
+1. Install the Supabase CLI:
+   ```bash
+   npm install -g supabase
+   ```
+
+2. Login to Supabase:
+   ```bash
+   supabase login
+   ```
+
+3. Link your project (you'll need your project reference ID from the URL):
+   ```bash
+   supabase link --project-ref YOUR_PROJECT_REF
+   ```
+
+4. Deploy the function:
+   ```bash
+   supabase functions deploy server
+   ```
+
+5. Your API will be available at:
+   ```
+   https://YOUR_PROJECT_REF.supabase.co/functions/v1/make-server-fe35748f
+   ```
+
+### 5. Configure Environment Variables
+
+1. Copy the `.env.example` file to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` and add your Supabase credentials:
+   ```
+   VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_anon_key_here
+   VITE_API_BASE_URL=https://YOUR_PROJECT_REF.supabase.co/functions/v1/make-server-fe35748f
+   ```
+
+## Running the App
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open your browser and navigate to the URL shown in the terminal (usually http://localhost:5173)
 
 ## Getting Started
 
 1. Open the app in your browser
-2. Create an account or sign in:
-   - **Sign Up**: Enter email and password, then select your country and PTO days
-   - **Sign In**: Enter your existing email and password
+2. Create an account:
+   - Enter your email and password
+   - Select your country (for bank holiday information)
+   - Enter your annual PTO days
 3. Start planning your trips!
 
 ## Features
@@ -30,46 +119,60 @@ Oooff is a travel planning app that helps you organize your time off and plan tr
 ### Last-Minute Deals
 - Discover spontaneous travel opportunities
 
-## User Accounts
+## Authentication & Data Security
 
-The app supports multiple user accounts, all stored locally in your browser:
-- Each account has its own email/password
-- User data includes: country, PTO days, time off dates, and trips
-- Switch between accounts by signing out and signing in with different credentials
-
-**Important Notes:**
-- Passwords are stored in plain text in localStorage (for demo purposes only)
-- Data is specific to your browser and device
-- Clearing browser data will delete all accounts
-- This is a demo app - do not use real passwords
-
-## Data Storage
-
-All data is stored in localStorage:
-- `oooff_users`: Contains all user accounts and their data
-- `oooff_current_user`: Tracks the currently signed-in user
+✅ **Secure Authentication**: Uses Supabase Auth with proper password hashing
+✅ **Session Management**: JWT tokens are automatically managed and refreshed
+✅ **Data Persistence**: All data is stored securely in Supabase PostgreSQL database
+✅ **Row Level Security**: Database policies ensure users can only access their own data
 
 ## Troubleshooting
 
-### Data Not Saving
-- Ensure your browser allows localStorage
-- Check that you're not in private/incognito mode
-- Some browsers may block localStorage - try a different browser
+### Environment Variables Not Loading
+- Make sure your `.env` file is in the root directory
+- Restart the development server after changing `.env`
+- Vite requires `VITE_` prefix for environment variables
 
-### Sign In Issues
-- Make sure you're using the correct email and password
-- Account emails are case-sensitive
-- If you forgot your password, you'll need to clear browser data and create a new account
+### Sign Up/Sign In Issues
+- Check that your Supabase URL and keys are correct
+- Verify the Edge Function is deployed and accessible
+- Check browser console for detailed error messages
+
+### Database Errors
+- Ensure you ran the migration SQL file
+- Check that Row Level Security policies are enabled
+- Verify your user is authenticated before making data requests
+
+### API Connection Issues
+- Verify your API_BASE_URL includes the full path to the Edge Function
+- Check that CORS is properly configured in the Edge Function
+- Ensure you're passing the Authorization header with API requests
 
 ### Sign Out
 Click the logout icon (⎋) in the top-right corner to sign out and return to the sign in screen.
 
-### Reset All Data
-To completely reset the app and delete all accounts:
-1. Open browser DevTools (F12)
-2. Go to the Console tab
-3. Run: `localStorage.clear()`
-4. Refresh the page
+## Development
+
+### Database Schema
+
+The app uses three main tables:
+
+1. **users**: Stores user metadata (country, PTO days)
+2. **trips**: Stores user trips (destination, dates, budget, activities)
+3. **time_off**: Stores individual time off dates
+
+All tables have Row Level Security enabled to protect user data.
+
+### API Endpoints
+
+The backend provides these endpoints:
+
+- `POST /signup` - Create new user account
+- `GET /user/data` - Get user data, trips, and time off
+- `POST /user/trips` - Save all trips
+- `DELETE /user/trips/:tripId` - Delete a specific trip
+- `POST /user/timeoff` - Save time off dates
+- `PUT /user/metadata` - Update user metadata (PTO days)
 
 ## Browser Compatibility
 The app works best in modern browsers:
@@ -78,4 +181,4 @@ The app works best in modern browsers:
 - Safari (latest)
 
 ## Security Note
-This app stores passwords in plain text for demonstration purposes. In a production app, passwords should be properly hashed and stored securely on a backend server. Never use your real passwords in this demo app.
+This app uses Supabase Auth for secure authentication. Passwords are properly hashed and stored securely. Session tokens are managed automatically with JWT tokens.
