@@ -117,10 +117,15 @@ export default function App() {
     }
   };
 
-  // Save user data whenever it changes
+  // Save user data whenever it changes (with debouncing)
   useEffect(() => {
     if (userData && session) {
-      saveUserData(userData, trips);
+      // Debounce the save operation to avoid excessive API calls
+      const timeoutId = setTimeout(() => {
+        saveUserData(userData, trips);
+      }, 1000); // Wait 1 second after last change
+
+      return () => clearTimeout(timeoutId);
     }
   }, [userData, trips, session]);
 
@@ -151,17 +156,21 @@ export default function App() {
   const handleDeleteTrip = async (id: string) => {
     if (!session) return;
 
+    // Find the trip being deleted before deleting
+    const tripToDelete = trips.find(t => t.id === id);
+
     try {
       // Delete from backend
-      await fetch(`${API_BASE_URL}/user/trips/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/user/trips/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
       });
 
-      // Find the trip being deleted
-      const tripToDelete = trips.find(t => t.id === id);
+      if (!response.ok) {
+        throw new Error('Failed to delete trip');
+      }
       
       if (tripToDelete && userData) {
         // Calculate which dates were used by this trip
@@ -184,10 +193,11 @@ export default function App() {
         });
       }
 
-      // Remove the trip
+      // Remove the trip from local state
       setTrips(trips.filter(t => t.id !== id));
     } catch (error) {
       console.error("Error deleting trip:", error);
+      // Don't update state if the backend call failed
     }
   };
 
