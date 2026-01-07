@@ -133,7 +133,9 @@ export default function App() {
 
       if (insertError) {
         console.error("Error inserting user data:", insertError);
-        // Continue even if insert fails - user is created in auth
+        // If user data insertion fails, we should still allow the user to proceed
+        // The user exists in auth, and we can attempt to insert the data again later
+        // or handle it gracefully in the app
       }
 
       // Insert initial time off dates if any
@@ -193,7 +195,7 @@ export default function App() {
 
       const newTrip = {
         ...trip,
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
       };
 
       // Insert trip into database
@@ -331,6 +333,8 @@ export default function App() {
       }
 
       // Delete all time off dates for the user
+      // Note: This clears all time off, ignoring datesToRemove parameter
+      // This matches the original localStorage implementation
       const { error } = await supabase
         .from('time_off')
         .delete()
