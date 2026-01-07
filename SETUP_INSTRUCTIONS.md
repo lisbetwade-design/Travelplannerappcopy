@@ -1,21 +1,72 @@
 # Oooff Travel Planner - Setup Instructions
 
 ## Overview
-Oooff is a travel planning app that helps you organize your time off and plan trips around bank holidays. The app uses localStorage to store multiple user accounts and their data locally in your browser.
+Oooff is a travel planning app that helps you organize your time off and plan trips around bank holidays. The app uses Supabase for authentication and data storage.
 
-## Getting Started
+## Prerequisites
 
-1. Open the app in your browser
-2. Create an account or sign in:
-   - **Sign Up**: Enter email and password, then select your country and PTO days
-   - **Sign In**: Enter your existing email and password
-3. Start planning your trips!
+- Node.js (v16 or higher)
+- A Supabase account (free tier available at [supabase.com](https://supabase.com))
+
+## Setup Instructions
+
+### 1. Clone and Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Set Up Supabase Project
+
+1. Create a new project at [app.supabase.com](https://app.supabase.com)
+2. Go to Project Settings > API
+3. Copy your project URL and anon/public key
+
+### 3. Configure Environment Variables
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Update `.env` with your Supabase credentials:
+   ```
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+### 4. Run Database Migrations
+
+Run the SQL migration script to create the necessary database tables:
+
+1. Go to your Supabase project dashboard
+2. Navigate to SQL Editor
+3. Open and run the migration file: `/supabase/migrations/20240104_create_tables.sql`
+
+This will create:
+- `users` table for user profile data
+- `trips` table for storing trip information
+- `time_off` table for tracking PTO/vacation days
+- Row Level Security (RLS) policies for secure data access
+
+### 5. Start the Development Server
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173` (or another port if 5173 is in use).
 
 ## Features
 
+### Authentication
+- Secure sign up and sign in with email/password
+- Session management with automatic token refresh
+- Secure password storage (hashed by Supabase Auth)
+
 ### Calendar
 - View bank holidays for your selected country
-- Add time off dates
+- Add and manage time off dates
 - Create and manage trips
 - See all your planned vacation days in one place
 
@@ -32,50 +83,70 @@ Oooff is a travel planning app that helps you organize your time off and plan tr
 
 ## User Accounts
 
-The app supports multiple user accounts, all stored locally in your browser:
-- Each account has its own email/password
+The app supports secure user authentication:
+- Each account has a unique email/password
 - User data includes: country, PTO days, time off dates, and trips
-- Switch between accounts by signing out and signing in with different credentials
-
-**Important Notes:**
-- Passwords are stored in plain text in localStorage (for demo purposes only)
-- Data is specific to your browser and device
-- Clearing browser data will delete all accounts
-- This is a demo app - do not use real passwords
+- All data is securely stored in Supabase
+- Row Level Security ensures users can only access their own data
 
 ## Data Storage
 
-All data is stored in localStorage:
-- `oooff_users`: Contains all user accounts and their data
-- `oooff_current_user`: Tracks the currently signed-in user
+All data is stored securely in Supabase:
+- User authentication is handled by Supabase Auth
+- User profiles are stored in the `users` table
+- Trips are stored in the `trips` table
+- Time off dates are stored in the `time_off` table
 
 ## Troubleshooting
 
-### Data Not Saving
-- Ensure your browser allows localStorage
-- Check that you're not in private/incognito mode
-- Some browsers may block localStorage - try a different browser
+### Connection Issues
+- Ensure your `.env` file has the correct Supabase credentials
+- Check that your Supabase project is active
+- Verify your network connection
 
-### Sign In Issues
-- Make sure you're using the correct email and password
-- Account emails are case-sensitive
-- If you forgot your password, you'll need to clear browser data and create a new account
+### Database Errors
+- Make sure you've run the migration script
+- Check Supabase dashboard for error logs
+- Verify Row Level Security policies are enabled
+
+### Sign In/Sign Up Issues
+- Check the browser console for error messages
+- Ensure email format is valid
+- Password must be at least 6 characters long
+- Check Supabase Auth logs in your project dashboard
 
 ### Sign Out
-Click the logout icon (⎋) in the top-right corner to sign out and return to the sign in screen.
+Click the logout icon (⎋) in the top-right corner to sign out.
 
-### Reset All Data
-To completely reset the app and delete all accounts:
-1. Open browser DevTools (F12)
-2. Go to the Console tab
-3. Run: `localStorage.clear()`
-4. Refresh the page
+## Security
+
+This app implements proper security practices:
+- Passwords are securely hashed by Supabase Auth
+- Row Level Security (RLS) protects user data
+- JWT tokens are used for authentication
+- All API requests are authenticated
 
 ## Browser Compatibility
+
 The app works best in modern browsers:
 - Chrome/Edge (latest)
 - Firefox (latest)
 - Safari (latest)
 
-## Security Note
-This app stores passwords in plain text for demonstration purposes. In a production app, passwords should be properly hashed and stored securely on a backend server. Never use your real passwords in this demo app.
+## Development
+
+### Backend API (Optional)
+
+The app includes a Deno-based backend API in `/supabase/functions/server/` that can be deployed as a Supabase Edge Function. This is optional as the frontend can communicate directly with Supabase.
+
+To deploy the Edge Function:
+```bash
+supabase functions deploy server
+```
+
+## Support
+
+For issues or questions, please check:
+- Supabase documentation: [supabase.com/docs](https://supabase.com/docs)
+- Project repository issues
+

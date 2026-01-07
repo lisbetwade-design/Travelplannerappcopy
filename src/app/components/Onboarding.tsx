@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { countries } from "../data/holidays";
 
 interface OnboardingProps {
-  onSignUp: (email: string, password: string, data: { country: string; timeOffDates: Date[]; totalPTODays: number }) => void;
+  onSignUp: (email: string, password: string, data: { country: string; timeOffDates: Date[]; totalPTODays: number }) => Promise<void>;
   onSignIn: (email: string, password: string) => Promise<void>;
 }
 
@@ -42,12 +42,12 @@ export function Onboarding({ onSignUp, onSignIn }: OnboardingProps) {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (country && totalPTODays) {
       setIsLoading(true);
       setError(null);
       try {
-        onSignUp(email, password, { country, timeOffDates: [], totalPTODays: parseInt(totalPTODays) });
+        await onSignUp(email, password, { country, timeOffDates: [], totalPTODays: parseInt(totalPTODays) });
       } catch (error) {
         console.error("Sign up error:", error);
         setError(error instanceof Error ? error.message : "Sign up failed. Please try again.");
