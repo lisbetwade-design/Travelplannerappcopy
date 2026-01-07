@@ -28,11 +28,11 @@ export function Dashboard({ country, timeOffDates, totalPTODays, trips, onAddTri
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10 shadow-sm">
+      <header className="bg-white border-b sticky top-0 z-10 shadow-sm backdrop-blur-sm bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-green-600 p-2 rounded-lg">
+              <div className="bg-gradient-to-br from-green-500 to-green-600 p-2.5 rounded-xl shadow-sm">
                 <CalendarIcon className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -56,20 +56,20 @@ export function Dashboard({ country, timeOffDates, totalPTODays, trips, onAddTri
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto">
-            <TabsTrigger value="calendar" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto p-1 bg-white rounded-xl shadow-sm">
+            <TabsTrigger value="calendar" className="flex items-center gap-2 rounded-lg data-[state=active]:shadow-sm">
               <CalendarIcon className="h-4 w-4" />
               <span>Calendar</span>
             </TabsTrigger>
-            <TabsTrigger value="itinerary" className="flex items-center gap-2">
+            <TabsTrigger value="itinerary" className="flex items-center gap-2 rounded-lg data-[state=active]:shadow-sm">
               <Sparkles className="h-4 w-4" />
               <span>AI Itinerary</span>
             </TabsTrigger>
-            <TabsTrigger value="experiences" className="flex items-center gap-2">
+            <TabsTrigger value="experiences" className="flex items-center gap-2 rounded-lg data-[state=active]:shadow-sm">
               <Compass className="h-4 w-4" />
               <span>Upcoming Trips</span>
             </TabsTrigger>
-            <TabsTrigger value="deals" className="flex items-center gap-2">
+            <TabsTrigger value="deals" className="flex items-center gap-2 rounded-lg data-[state=active]:shadow-sm">
               <Zap className="h-4 w-4" />
               <span>Last-Minute</span>
             </TabsTrigger>

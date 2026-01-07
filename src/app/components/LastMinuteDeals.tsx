@@ -21,7 +21,9 @@ export function LastMinuteDeals() {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-green-600" />
+          <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
+            <Zap className="h-5 w-5 text-white" />
+          </div>
           <CardTitle>Last-Minute Travel Deals</CardTitle>
         </div>
         <CardDescription>
@@ -35,25 +37,25 @@ export function LastMinuteDeals() {
             const tripDays = differenceInDays(deal.returnDate, deal.departureDate);
 
             return (
-              <Card key={deal.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <Card key={deal.id} className="overflow-hidden hover:shadow-lg transition-all border-0 shadow-md">
                 <div className="relative h-48 bg-gray-200">
                   <img
                     src={deal.imageUrl}
                     alt={deal.destination}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-2 left-2 right-2 flex justify-between">
-                    <Badge className="bg-orange-600 text-white">
+                  <div className="absolute top-3 left-3 right-3 flex justify-between">
+                    <Badge className="bg-orange-600 text-white shadow-lg">
                       <Zap className="h-3 w-3 mr-1" />
                       {deal.discount}% OFF
                     </Badge>
-                    <Badge variant="secondary" className="bg-white">
+                    <Badge variant="secondary" className="bg-white shadow-lg">
                       Leaves in {daysUntil} days
                     </Badge>
                   </div>
                 </div>
 
-                <CardContent className="p-4 space-y-4">
+                <CardContent className="p-5 space-y-4">
                   <div>
                     <h3 className="font-semibold text-lg">{deal.destination}</h3>
                     <p className="text-sm text-muted-foreground">{deal.country}</p>
@@ -96,7 +98,7 @@ export function LastMinuteDeals() {
                         <p className="text-2xl font-bold text-green-600">${deal.price}</p>
                       </div>
                     </div>
-                    <Button>Book Now</Button>
+                    <Button className="shadow-sm">Book Now</Button>
                   </div>
                 </CardContent>
               </Card>

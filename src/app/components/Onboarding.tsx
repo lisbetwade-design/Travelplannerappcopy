@@ -63,10 +63,12 @@ export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b px-6 py-4">
+      <header className="border-b px-6 py-4 bg-white shadow-sm">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-2">
-            <Plane className="h-6 w-6 text-green-600" />
+            <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
+              <Plane className="h-5 w-5 text-white" />
+            </div>
             <span className="font-semibold text-xl">Oooff</span>
           </div>
         </div>
@@ -76,7 +78,7 @@ export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
       <main className="max-w-2xl mx-auto px-6 py-16">
         {/* Mascot/Icon */}
         <div className="flex justify-center mb-8">
-          <div className="bg-green-100 p-6 rounded-full">
+          <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-6 rounded-3xl shadow-sm">
             <Plane className="h-16 w-16 text-green-600" />
           </div>
         </div>

@@ -65,7 +65,9 @@ export function ItineraryBuilder() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-green-600" />
+            <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
+              <Sparkles className="h-5 w-5 text-white" />
+            </div>
             <CardTitle>AI Itinerary Builder</CardTitle>
           </div>
           <CardDescription>
@@ -110,7 +112,7 @@ export function ItineraryBuilder() {
                 max="14"
                 value={days}
                 onChange={(e) => setDays(Number(e.target.value))}
-                className="w-full"
+                className="w-full accent-green-600"
               />
             </div>
 
@@ -127,7 +129,7 @@ export function ItineraryBuilder() {
                 step="100"
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}
-                className="w-full"
+                className="w-full accent-green-600"
               />
             </div>
           </div>
@@ -139,7 +141,7 @@ export function ItineraryBuilder() {
                 <Badge
                   key={interest}
                   variant={interests.includes(interest) ? "default" : "outline"}
-                  className="cursor-pointer hover:scale-105 transition-transform"
+                  className="cursor-pointer hover:scale-105 transition-all"
                   onClick={() => toggleInterest(interest)}
                 >
                   {interest}
@@ -180,9 +182,9 @@ export function ItineraryBuilder() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="day-1" className="w-full">
-              <TabsList className="w-full flex-wrap h-auto">
+              <TabsList className="w-full flex-wrap h-auto p-1 bg-white rounded-xl shadow-sm">
                 {itinerary.days.map((day) => (
-                  <TabsTrigger key={day.day} value={`day-${day.day}`}>
+                  <TabsTrigger key={day.day} value={`day-${day.day}`} className="rounded-lg data-[state=active]:shadow-sm">
                     Day {day.day}
                   </TabsTrigger>
                 ))}
@@ -203,7 +205,7 @@ export function ItineraryBuilder() {
                         key={idx}
                         className="relative pl-8 pb-4 border-l-2 border-gray-200 last:border-0"
                       >
-                        <div className="absolute left-0 top-0 -translate-x-1/2 w-4 h-4 rounded-full bg-green-600 border-2 border-white" />
+                        <div className="absolute left-0 top-0 -translate-x-1/2 w-4 h-4 rounded-full bg-green-600 border-2 border-white shadow-sm" />
                         
                         <div className="space-y-2">
                           <div className="flex items-start justify-between">

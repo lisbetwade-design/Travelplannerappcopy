@@ -25,7 +25,9 @@ export function UpcomingTrips({ trips, onDeleteTrip }: UpcomingTripsProps) {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
-              <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-4 rounded-2xl w-fit mx-auto mb-4">
+                <MapPin className="h-12 w-12 text-green-600" />
+              </div>
               <h3 className="font-semibold mb-2">No Upcoming Trips</h3>
               <p className="text-sm text-muted-foreground">
                 Select dates on the calendar to plan your next adventure
@@ -40,16 +42,18 @@ export function UpcomingTrips({ trips, onDeleteTrip }: UpcomingTripsProps) {
           const isPast = trip.endDate < new Date();
 
           return (
-            <Card key={trip.id} className={isPast ? "opacity-60" : ""}>
+            <Card key={trip.id} className={`transition-all hover:shadow-md ${isPast ? "opacity-60" : ""}`}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <MapPin className="h-4 w-4 text-green-600" />
+                      <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
+                        <MapPin className="h-4 w-4 text-white" />
+                      </div>
                       <CardTitle className="text-lg">{trip.destination}</CardTitle>
                     </div>
                     <CardDescription>
-                      <div className="flex flex-col gap-1 mt-2">
+                      <div className="flex flex-col gap-2 mt-2">
                         <div className="flex items-center gap-2 text-sm">
                           <CalendarIcon className="h-3 w-3" />
                           <span>

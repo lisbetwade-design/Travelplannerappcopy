@@ -1,7 +1,7 @@
 
-  # Travel Planner App (Copy)
+  # Oooff
 
-  This is a code bundle for Travel Planner App (Copy). The original project is available at https://www.figma.com/design/3mUb3Ux3LiLdZbTmXEtEDj/Travel-Planner-App--Copy-.
+  This is a code bundle for Oooff. The original project is available at https://www.figma.com/design/3mUb3Ux3LiLdZbTmXEtEDj/Oooff.
 
   ## Running the code
 

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { Onboarding } from "./components/Onboarding";
 import { Dashboard } from "./components/Dashboard";
 import type { Trip } from "./components/UpcomingTrips";
 import { projectId, publicAnonKey } from "../../utils/supabase/info";
+import { getSupabaseClient } from "../../utils/supabase/client";
 
 interface UserData {
   country: string;
@@ -11,10 +11,7 @@ interface UserData {
   totalPTODays: number;
 }
 
-const supabase = createClient(
-  `https://${projectId}.supabase.co`,
-  publicAnonKey
-);
+const supabase = getSupabaseClient();
 
 export default function App() {
   const [userData, setUserData] = useState<UserData | null>(null);
