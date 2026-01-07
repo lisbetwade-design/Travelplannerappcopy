@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { countries } from "../data/holidays";
 
 interface OnboardingProps {
-  onComplete: (data: { country: string; timeOffDates: Date[]; totalPTODays: number }, email: string, password: string) => void;
+  onSignUp: (email: string, password: string, data: { country: string; timeOffDates: Date[]; totalPTODays: number }) => void;
   onSignIn: (email: string, password: string) => Promise<void>;
 }
 
-export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
+export function Onboarding({ onSignUp, onSignIn }: OnboardingProps) {
   const [step, setStep] = useState(1);
   const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState("");
@@ -35,7 +35,7 @@ export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
           await onSignIn(email, password);
         } catch (error) {
           console.error("Sign in error:", error);
-          setError("Sign in failed. Please check your credentials and try again.");
+          setError(error instanceof Error ? error.message : "Sign in failed. Please try again.");
           setIsLoading(false);
         }
       }
@@ -46,7 +46,13 @@ export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
     if (country && totalPTODays) {
       setIsLoading(true);
       setError(null);
-      onComplete({ country, timeOffDates: [], totalPTODays: parseInt(totalPTODays) }, email, password);
+      try {
+        onSignUp(email, password, { country, timeOffDates: [], totalPTODays: parseInt(totalPTODays) });
+      } catch (error) {
+        console.error("Sign up error:", error);
+        setError(error instanceof Error ? error.message : "Sign up failed. Please try again.");
+        setIsLoading(false);
+      }
     }
   };
 
@@ -96,7 +102,10 @@ export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
             <div className="max-w-md mx-auto space-y-6">
               <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
                 <button
-                  onClick={() => setIsSignUp(true)}
+                  onClick={() => {
+                    setIsSignUp(true);
+                    setError(null);
+                  }}
                   className={`flex-1 py-2 px-4 rounded-md transition-colors ${
                     isSignUp ? "bg-green-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
@@ -104,7 +113,10 @@ export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
                   Sign Up
                 </button>
                 <button
-                  onClick={() => setIsSignUp(false)}
+                  onClick={() => {
+                    setIsSignUp(false);
+                    setError(null);
+                  }}
                   className={`flex-1 py-2 px-4 rounded-md transition-colors ${
                     !isSignUp ? "bg-green-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
@@ -159,7 +171,7 @@ export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
                     <span>Signing in...</span>
                   </div>
                 ) : (
-                  isSignUp ? "Sign Up" : "Log In"
+                  isSignUp ? "Continue" : "Sign In"
                 )}
               </Button>
 
@@ -172,7 +184,10 @@ export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
               <p className="text-center text-sm text-gray-600">
                 {isSignUp ? "Already have an account? " : "Don't have an account? "}
                 <button
-                  onClick={() => setIsSignUp(!isSignUp)}
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    setError(null);
+                  }}
                   className="text-green-600 hover:underline font-medium"
                 >
                   {isSignUp ? "Sign In" : "Sign Up"}
@@ -236,6 +251,12 @@ export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
                 </p>
               </div>
             </div>
+
+            {error && (
+              <div className="max-w-md mx-auto bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
           </div>
         )}
 
@@ -258,8 +279,17 @@ export function Onboarding({ onComplete, onSignIn }: OnboardingProps) {
                 size="lg"
                 className="gap-2 px-8 h-12 bg-green-600 hover:bg-green-700"
               >
-                Get Started
-                <ArrowRight className="h-4 w-4" />
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    <span>Creating account...</span>
+                  </div>
+                ) : (
+                  <>
+                    Get Started
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
               </Button>
             </>
           )}

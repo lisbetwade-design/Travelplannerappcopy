@@ -1,118 +1,81 @@
 # Oooff Travel Planner - Setup Instructions
 
-## Prerequisites
-You need a Supabase project to run this app. The app uses Supabase for authentication and database storage.
+## Overview
+Oooff is a travel planning app that helps you organize your time off and plan trips around bank holidays. The app uses localStorage to store multiple user accounts and their data locally in your browser.
 
-## Setup Steps
-
-### 1. Create Database Tables
-
-The app requires three database tables to store user data. You must run the migration SQL before using the app.
-
-**To apply the migration:**
-
-1. Open your Supabase project dashboard at https://supabase.com/dashboard
-2. Navigate to **SQL Editor** in the left sidebar
-3. Click **New Query**
-4. Open the file `/supabase/migrations/20240104_create_tables.sql` in your code editor
-5. Copy all the SQL code (the entire file)
-6. Paste it into the Supabase SQL Editor
-7. Click **Run** to execute the migration
-
-**Verify the tables were created:**
-
-Run this query in the SQL Editor:
-```sql
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
-AND table_name IN ('users', 'time_off', 'trips');
-```
-
-You should see all three tables: `users`, `time_off`, and `trips`.
-
-### 2. Deploy Edge Function
-
-The edge function in `/supabase/functions/server/` handles user authentication and data storage.
-
-**In Figma Make:**
-- The edge function should be automatically deployed when you save the files
-
-**To verify the edge function is deployed:**
-1. Go to your Supabase dashboard
-2. Navigate to **Edge Functions** in the left sidebar
-3. You should see a function named `server` listed
-4. The status should be "Deployed"
-
-### 3. Test the App
+## Getting Started
 
 1. Open the app in your browser
-2. Click "Get Started" to begin onboarding
-3. Complete the 2-step onboarding process:
-   - Step 1: Select your country and enter total PTO days
-   - Step 2: Create account with email and password
-4. Check the browser console for any error messages
+2. Create an account or sign in:
+   - **Sign Up**: Enter email and password, then select your country and PTO days
+   - **Sign In**: Enter your existing email and password
+3. Start planning your trips!
+
+## Features
+
+### Calendar
+- View bank holidays for your selected country
+- Add time off dates
+- Create and manage trips
+- See all your planned vacation days in one place
+
+### AI Itinerary Builder
+- Generate personalized travel itineraries
+- Customize based on your interests and budget
+
+### Upcoming Trips
+- View all your planned trips
+- Delete trips to restore vacation days
+
+### Last-Minute Deals
+- Discover spontaneous travel opportunities
+
+## User Accounts
+
+The app supports multiple user accounts, all stored locally in your browser:
+- Each account has its own email/password
+- User data includes: country, PTO days, time off dates, and trips
+- Switch between accounts by signing out and signing in with different credentials
+
+**Important Notes:**
+- Passwords are stored in plain text in localStorage (for demo purposes only)
+- Data is specific to your browser and device
+- Clearing browser data will delete all accounts
+- This is a demo app - do not use real passwords
+
+## Data Storage
+
+All data is stored in localStorage:
+- `oooff_users`: Contains all user accounts and their data
+- `oooff_current_user`: Tracks the currently signed-in user
 
 ## Troubleshooting
 
-### "Failed to fetch" Error
+### Data Not Saving
+- Ensure your browser allows localStorage
+- Check that you're not in private/incognito mode
+- Some browsers may block localStorage - try a different browser
 
-If you see this error during signup:
+### Sign In Issues
+- Make sure you're using the correct email and password
+- Account emails are case-sensitive
+- If you forgot your password, you'll need to clear browser data and create a new account
 
-1. **Check Edge Function Deployment**
-   - Open Supabase dashboard → Edge Functions
-   - Ensure the `server` function is deployed and active
-   - If not deployed, redeploy the function
+### Sign Out
+Click the logout icon (⎋) in the top-right corner to sign out and return to the sign in screen.
 
-2. **Check Database Tables**
-   - The migration SQL must be run first
-   - Check the SQL Editor to verify tables exist
-   - Re-run the migration if needed
+### Reset All Data
+To completely reset the app and delete all accounts:
+1. Open browser DevTools (F12)
+2. Go to the Console tab
+3. Run: `localStorage.clear()`
+4. Refresh the page
 
-3. **Check Console Logs**
-   - Open browser DevTools (F12)
-   - Look at the Console tab for detailed error messages
-   - The app will show health check results and API responses
+## Browser Compatibility
+The app works best in modern browsers:
+- Chrome/Edge (latest)
+- Firefox (latest)
+- Safari (latest)
 
-### Multiple GoTrueClient Instances Warning
-
-This is a harmless warning during development (hot-reload). It won't affect functionality.
-
-### Database Errors
-
-If you see database-related errors in the Supabase logs:
-
-1. Ensure the migration was run successfully
-2. Check that Row Level Security (RLS) policies were created
-3. Verify your Supabase project has the correct permissions
-
-## Database Schema
-
-### users table
-- `id` - UUID (references auth.users)
-- `country` - TEXT
-- `total_pto_days` - INTEGER
-- `created_at`, `updated_at` - TIMESTAMP
-
-### time_off table
-- `id` - UUID
-- `user_id` - UUID (references auth.users)
-- `date` - DATE
-- `created_at` - TIMESTAMP
-
-### trips table
-- `id` - TEXT
-- `user_id` - UUID (references auth.users)
-- `destination` - TEXT
-- `start_date`, `end_date` - DATE
-- `budget`, `activities` - TEXT (nullable)
-- `created_at`, `updated_at` - TIMESTAMP
-
-## Support
-
-If you continue to experience issues:
-
-1. Check the browser console for detailed error messages
-2. Check Supabase logs in the dashboard
-3. Verify all setup steps were completed
-4. Try clearing browser cache and localStorage
+## Security Note
+This app stores passwords in plain text for demonstration purposes. In a production app, passwords should be properly hashed and stored securely on a backend server. Never use your real passwords in this demo app.
