@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 
 -- Create trips table
 CREATE TABLE IF NOT EXISTS public.trips (
-  id TEXT PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   destination TEXT NOT NULL,
   start_date DATE NOT NULL,

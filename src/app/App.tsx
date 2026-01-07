@@ -133,9 +133,9 @@ export default function App() {
 
       if (insertError) {
         console.error("Error inserting user data:", insertError);
-        // If user data insertion fails, we should still allow the user to proceed
-        // The user exists in auth, and we can attempt to insert the data again later
-        // or handle it gracefully in the app
+        // If database tables don't exist, user can still proceed with auth
+        // The data is stored in user_metadata as a fallback
+        // This allows the app to work even if migrations haven't been run yet
       }
 
       // Insert initial time off dates if any
