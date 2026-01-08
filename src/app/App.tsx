@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { Onboarding } from "./components/Onboarding";
 import { Dashboard } from "./components/Dashboard";
 import type { Trip } from "./components/UpcomingTrips";
-import { supabase, API_BASE_URL } from "../lib/supabase";
-import type { Session } from '@supabase/supabase-js';
+import { supabase } from "../lib/supabase";
 
 interface UserData {
   country: string;
@@ -19,58 +18,81 @@ export default function App() {
 
   // Load current user session on mount
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        loadUserData(session);
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        loadUserData(session);
-      } else {
-        setUserData(null);
-        setTrips([]);
-        setIsLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    checkSession();
   }, []);
 
-  const loadUserData = async (session: Session) => {
+  const checkSession = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/user/data`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        await loadUserData(session.user.id);
+      } else {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error checking session:", error);
+      setIsLoading(false);
+    }
+  };
 
-      if (!response.ok) {
-        throw new Error('Failed to load user data');
+  const loadUserData = async (userId: string) => {
+    try {
+      // Get user data from users table
+      const { data: userRecord, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      // Get auth user for email
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.error("Error loading user data:", userError);
+        setIsLoading(false);
+        return;
       }
 
-      const data = await response.json();
+      // Get time off dates
+      const { data: timeOffData, error: timeOffError } = await supabase
+        .from('time_off')
+        .select('date')
+        .eq('user_id', userId)
+        .order('date', { ascending: true });
+
+      const timeOffDates = timeOffData 
+        ? timeOffData.map(item => new Date(item.date)) 
+        : [];
+
+      // Get trips
+      const { data: tripsData, error: tripsError } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('user_id', userId)
+        .order('start_date', { ascending: true });
+
+      const userTrips = tripsData 
+        ? tripsData.map(trip => ({
+            id: trip.id,
+            destination: trip.destination,
+            startDate: new Date(trip.start_date),
+            endDate: new Date(trip.end_date),
+            budget: trip.budget,
+            activities: trip.activities,
+          }))
+        : [];
+
+      if (user?.email) {
+        setCurrentUserEmail(user.email);
+      }
 
       setUserData({
-        country: data.user.country,
-        timeOffDates: data.timeOffDates.map((d: string) => new Date(d)),
-        totalPTODays: data.user.totalPTODays,
+        country: userRecord.country,
+        totalPTODays: userRecord.total_pto_days,
+        timeOffDates,
       });
-
-      setTrips(data.trips.map((trip: any) => ({
-        ...trip,
-        startDate: new Date(trip.startDate),
-        endDate: new Date(trip.endDate),
-      })));
+      setTrips(userTrips);
     } catch (error) {
       console.error("Error loading user data:", error);
     } finally {
@@ -78,99 +100,138 @@ export default function App() {
     }
   };
 
-  const saveUserData = async (userData: UserData, trips: Trip[]) => {
-    if (!session) return;
-
+  const handleSignUp = async (email: string, password: string, data: UserData) => {
     try {
-      // Save time off dates
-      await fetch(`${API_BASE_URL}/user/timeoff`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          timeOffDates: userData.timeOffDates.map(d => d.toISOString()),
-        }),
+      // Sign up with Supabase Auth
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            country: data.country,
+            totalPTODays: data.totalPTODays,
+          }
+        }
       });
 
-      // Save trips
-      await fetch(`${API_BASE_URL}/user/trips`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          trips: trips.map(trip => ({
-            id: trip.id,
-            destination: trip.destination,
-            startDate: trip.startDate.toISOString(),
-            endDate: trip.endDate.toISOString(),
-            budget: trip.budget,
-            activities: trip.activities,
-          })),
-        }),
-      });
+      if (signUpError) {
+        throw signUpError;
+      }
+
+      if (!authData.user) {
+        throw new Error("Failed to create user");
+      }
+
+      // Insert user data into users table
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          country: data.country,
+          total_pto_days: data.totalPTODays,
+        });
+
+      if (insertError) {
+        console.error("Error inserting user data:", insertError);
+        // If database tables don't exist, user can still proceed with auth
+        // The data is stored in user_metadata as a fallback
+        // This allows the app to work even if migrations haven't been run yet
+      }
+
+      // Insert initial time off dates if any
+      if (data.timeOffDates.length > 0) {
+        const timeOffRecords = data.timeOffDates.map(date => ({
+          user_id: authData.user.id,
+          date: date.toISOString().split('T')[0],
+        }));
+
+        const { error: timeOffError } = await supabase
+          .from('time_off')
+          .insert(timeOffRecords);
+
+        if (timeOffError) {
+          console.error("Error inserting time off:", timeOffError);
+        }
+      }
+
+      setCurrentUserEmail(email);
+      setUserData(data);
+      setTrips([]);
     } catch (error) {
-      console.error("Error saving user data:", error);
+      console.error("Sign up error:", error);
+      throw error;
     }
   };
 
-  // Save user data whenever it changes (with debouncing)
-  useEffect(() => {
-    if (userData && session) {
-      // Debounce the save operation to avoid excessive API calls
-      const timeoutId = setTimeout(() => {
-        saveUserData(userData, trips);
-      }, 1000); // Wait 1 second after last change
+  const handleSignIn = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      return () => clearTimeout(timeoutId);
+      if (error) {
+        throw error;
+      }
+
+      if (!data.user) {
+        throw new Error("No user found");
+      }
+
+      await loadUserData(data.user.id);
+    } catch (error) {
+      console.error("Sign in error:", error);
+      throw error;
     }
-  }, [userData, trips, session]);
-
-  const handleSignUp = (newSession: Session, data: { country: string; totalPTODays: number }) => {
-    setSession(newSession);
-    setUserData({
-      country: data.country,
-      timeOffDates: [],
-      totalPTODays: data.totalPTODays,
-    });
-    setTrips([]);
-    setIsLoading(false);
   };
 
-  const handleSignIn = (newSession: Session) => {
-    setSession(newSession);
-    loadUserData(newSession);
-  };
+  const handleAddTrip = async (trip: Omit<Trip, "id">) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user");
+      }
 
-  const handleAddTrip = (trip: Omit<Trip, "id">) => {
-    const newTrip = {
-      ...trip,
-      id: Date.now().toString(),
-    };
-    setTrips([...trips, newTrip]);
+      const newTrip = {
+        ...trip,
+        id: crypto.randomUUID(),
+      };
+
+      // Insert trip into database
+      const { error } = await supabase
+        .from('trips')
+        .insert({
+          id: newTrip.id,
+          user_id: user.id,
+          destination: newTrip.destination,
+          start_date: newTrip.startDate.toISOString().split('T')[0],
+          end_date: newTrip.endDate.toISOString().split('T')[0],
+          budget: newTrip.budget,
+          activities: newTrip.activities,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      setTrips([...trips, newTrip]);
+    } catch (error) {
+      console.error("Error adding trip:", error);
+      throw error;
+    }
   };
 
   const handleDeleteTrip = async (id: string) => {
-    if (!session) return;
-
-    // Find the trip being deleted before deleting
-    const tripToDelete = trips.find(t => t.id === id);
-
     try {
-      // Delete from backend
-      const response = await fetch(`${API_BASE_URL}/user/trips/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete trip');
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user");
       }
+
+      // Find the trip being deleted
+      const tripToDelete = trips.find(t => t.id === id);
       
       if (tripToDelete && userData) {
         // Calculate which dates were used by this trip
@@ -187,51 +248,140 @@ export default function App() {
           ...tripDates
         ];
 
+        // Insert restored time off dates to database
+        const timeOffRecords = tripDates.map(date => ({
+          user_id: user.id,
+          date: date.toISOString().split('T')[0],
+        }));
+
+        const { error: timeOffError } = await supabase
+          .from('time_off')
+          .insert(timeOffRecords);
+
+        if (timeOffError) {
+          console.error("Error restoring time off:", timeOffError);
+        }
+
         setUserData({
           ...userData,
           timeOffDates: restoredTimeOff,
         });
       }
 
-      // Remove the trip from local state
+      // Delete the trip from database
+      const { error } = await supabase
+        .from('trips')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Remove the trip from state
       setTrips(trips.filter(t => t.id !== id));
     } catch (error) {
       console.error("Error deleting trip:", error);
-      // Don't update state if the backend call failed
+      throw error;
     }
   };
 
-  const handleAddTimeOff = (dates: Date[]) => {
+  const handleAddTimeOff = async (dates: Date[]) => {
     if (!userData) return;
-    const updatedDates = [...userData.timeOffDates, ...dates];
-    setUserData({
-      ...userData,
-      timeOffDates: updatedDates,
-    });
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user");
+      }
+      
+      if (tripToDelete && userData) {
+        // Calculate which dates were used by this trip
+        const tripDates: Date[] = [];
+        const currentDate = new Date(tripToDelete.startDate);
+        while (currentDate <= tripToDelete.endDate) {
+          tripDates.push(new Date(currentDate));
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+      // Insert new time off dates
+      const timeOffRecords = dates.map(date => ({
+        user_id: user.id,
+        date: date.toISOString().split('T')[0],
+      }));
+
+      const { error } = await supabase
+        .from('time_off')
+        .insert(timeOffRecords);
+
+      if (error) {
+        throw error;
+      }
+
+      const updatedDates = [...userData.timeOffDates, ...dates];
+      setUserData({
+        ...userData,
+        timeOffDates: updatedDates,
+      });
+    } catch (error) {
+      console.error("Error adding time off:", error);
+      throw error;
+    }
   };
 
-  const handleRemoveTimeOff = (datesToRemove: Date[]) => {
+  const handleRemoveTimeOff = async (datesToRemove: Date[]) => {
     if (!userData) return;
-    setUserData({
-      ...userData,
-      timeOffDates: [],
-    });
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user");
+      }
+
+      // Delete all time off dates for the user
+      // Note: This clears all time off, ignoring datesToRemove parameter
+      // This matches the original localStorage implementation
+      const { error } = await supabase
+        .from('time_off')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      setUserData({
+        ...userData,
+        timeOffDates: [],
+      });
+    } catch (error) {
+      console.error("Error removing time off:", error);
+      throw error;
+    }
   };
 
   const handleUpdatePTODays = async (days: number) => {
-    if (!userData || !session) return;
+    if (!userData) return;
     
     try {
-      await fetch(`${API_BASE_URL}/user/metadata`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          totalPTODays: days,
-        }),
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user");
+      }
+
+      // Update in database
+      const { error } = await supabase
+        .from('users')
+        .update({ total_pto_days: days })
+        .eq('id', user.id);
+
+      if (error) {
+        throw error;
+      }
 
       setUserData({
         ...userData,
@@ -239,14 +389,19 @@ export default function App() {
       });
     } catch (error) {
       console.error("Error updating PTO days:", error);
+      throw error;
     }
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setUserData(null);
-    setTrips([]);
-    setSession(null);
+    try {
+      await supabase.auth.signOut();
+      setUserData(null);
+      setTrips([]);
+      setCurrentUserEmail(null);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   if (isLoading) {

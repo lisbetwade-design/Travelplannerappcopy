@@ -5,106 +5,68 @@ Oooff is a travel planning app that helps you organize your time off and plan tr
 
 ## Prerequisites
 
-Before you begin, you'll need:
 - Node.js (v16 or higher)
-- A Supabase account (sign up at https://supabase.com)
+- A Supabase account (free tier available at [supabase.com](https://supabase.com))
 
-## Supabase Setup
+## Setup Instructions
 
-### 1. Create a Supabase Project
+### 1. Clone and Install Dependencies
 
-1. Go to https://app.supabase.com
-2. Click "New Project"
-3. Choose your organization and fill in project details
-4. Wait for your project to be created (this takes a few minutes)
+```bash
+npm install
+```
 
-### 2. Get Your API Keys
+### 2. Set Up Supabase Project
 
-1. Go to your project settings (gear icon in the sidebar)
-2. Click "API" in the settings menu
-3. Copy the following values:
-   - **Project URL** (e.g., https://xxxxx.supabase.co)
-   - **anon/public key** (This is your SUPABASE_ANON_KEY)
+1. Create a new project at [app.supabase.com](https://app.supabase.com)
+2. Go to Project Settings > API
+3. Copy your project URL and anon/public key
 
-### 3. Set Up Database Tables
+### 3. Configure Environment Variables
 
-1. In your Supabase project, click "SQL Editor" in the sidebar
-2. Click "New Query"
-3. Copy the contents of `supabase/migrations/20240104_create_tables.sql`
-4. Paste into the SQL editor and click "Run"
-5. Verify tables were created by clicking "Table Editor" - you should see `users`, `trips`, and `time_off` tables
-
-### 4. Deploy the Edge Function (Backend Server)
-
-The backend API server is located in `supabase/functions/server/`. You need to deploy it as a Supabase Edge Function:
-
-1. Install the Supabase CLI:
-   ```bash
-   npm install -g supabase
-   ```
-
-2. Login to Supabase:
-   ```bash
-   supabase login
-   ```
-
-3. Link your project (you'll need your project reference ID from the URL):
-   ```bash
-   supabase link --project-ref YOUR_PROJECT_REF
-   ```
-
-4. Deploy the function:
-   ```bash
-   supabase functions deploy server
-   ```
-
-5. Your API will be available at:
-   ```
-   https://YOUR_PROJECT_REF.supabase.co/functions/v1/make-server-fe35748f
-   ```
-
-### 5. Configure Environment Variables
-
-1. Copy the `.env.example` file to `.env`:
+1. Copy `.env.example` to `.env`:
    ```bash
    cp .env.example .env
    ```
 
-2. Edit `.env` and add your Supabase credentials:
+2. Update `.env` with your Supabase credentials:
    ```
-   VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-   VITE_SUPABASE_ANON_KEY=your_anon_key_here
-   VITE_API_BASE_URL=https://YOUR_PROJECT_REF.supabase.co/functions/v1/make-server-fe35748f
-   ```
-
-## Running the App
-
-1. Install dependencies:
-   ```bash
-   npm install
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
+### 4. Run Database Migrations
 
-3. Open your browser and navigate to the URL shown in the terminal (usually http://localhost:5173)
+Run the SQL migration script to create the necessary database tables:
 
-## Getting Started
+1. Go to your Supabase project dashboard
+2. Navigate to SQL Editor
+3. Open and run the migration file: `/supabase/migrations/20240104_create_tables.sql`
 
-1. Open the app in your browser
-2. Create an account:
-   - Enter your email and password
-   - Select your country (for bank holiday information)
-   - Enter your annual PTO days
-3. Start planning your trips!
+This will create:
+- `users` table for user profile data
+- `trips` table for storing trip information
+- `time_off` table for tracking PTO/vacation days
+- Row Level Security (RLS) policies for secure data access
+
+### 5. Start the Development Server
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173` (or another port if 5173 is in use).
 
 ## Features
 
+### Authentication
+- Secure sign up and sign in with email/password
+- Session management with automatic token refresh
+- Secure password storage (hashed by Supabase Auth)
+
 ### Calendar
 - View bank holidays for your selected country
-- Add time off dates
+- Add and manage time off dates
 - Create and manage trips
 - See all your planned vacation days in one place
 
@@ -121,64 +83,73 @@ The backend API server is located in `supabase/functions/server/`. You need to d
 
 ## Authentication & Data Security
 
-✅ **Secure Authentication**: Uses Supabase Auth with proper password hashing
-✅ **Session Management**: JWT tokens are automatically managed and refreshed
-✅ **Data Persistence**: All data is stored securely in Supabase PostgreSQL database
-✅ **Row Level Security**: Database policies ensure users can only access their own data
+The app supports secure user authentication:
+- Each account has a unique email/password
+- User data includes: country, PTO days, time off dates, and trips
+- All data is securely stored in Supabase
+- Row Level Security ensures users can only access their own data
 
-## Troubleshooting
+## Data Storage
 
-### Environment Variables Not Loading
-- Make sure your `.env` file is in the root directory
-- Restart the development server after changing `.env`
-- Vite requires `VITE_` prefix for environment variables
+All data is stored securely in Supabase:
+- User authentication is handled by Supabase Auth
+- User profiles are stored in the `users` table
+- Trips are stored in the `trips` table
+- Time off dates are stored in the `time_off` table
 
 ### Sign Up/Sign In Issues
 - Check that your Supabase URL and keys are correct
 - Verify the Edge Function is deployed and accessible
 - Check browser console for detailed error messages
 
-### Database Errors
-- Ensure you ran the migration SQL file
-- Check that Row Level Security policies are enabled
-- Verify your user is authenticated before making data requests
+### Connection Issues
+- Ensure your `.env` file has the correct Supabase credentials
+- Check that your Supabase project is active
+- Verify your network connection
 
-### API Connection Issues
-- Verify your API_BASE_URL includes the full path to the Edge Function
-- Check that CORS is properly configured in the Edge Function
-- Ensure you're passing the Authorization header with API requests
+### Database Errors
+- Make sure you've run the migration script
+- Check Supabase dashboard for error logs
+- Verify Row Level Security policies are enabled
+
+### Sign In/Sign Up Issues
+- Check the browser console for error messages
+- Ensure email format is valid
+- Password must be at least 6 characters long
+- Check Supabase Auth logs in your project dashboard
 
 ### Sign Out
-Click the logout icon (⎋) in the top-right corner to sign out and return to the sign in screen.
+Click the logout icon (⎋) in the top-right corner to sign out.
 
-## Development
+## Security
 
-### Database Schema
-
-The app uses three main tables:
-
-1. **users**: Stores user metadata (country, PTO days)
-2. **trips**: Stores user trips (destination, dates, budget, activities)
-3. **time_off**: Stores individual time off dates
-
-All tables have Row Level Security enabled to protect user data.
-
-### API Endpoints
-
-The backend provides these endpoints:
-
-- `POST /signup` - Create new user account
-- `GET /user/data` - Get user data, trips, and time off
-- `POST /user/trips` - Save all trips
-- `DELETE /user/trips/:tripId` - Delete a specific trip
-- `POST /user/timeoff` - Save time off dates
-- `PUT /user/metadata` - Update user metadata (PTO days)
+This app implements proper security practices:
+- Passwords are securely hashed by Supabase Auth
+- Row Level Security (RLS) protects user data
+- JWT tokens are used for authentication
+- All API requests are authenticated
 
 ## Browser Compatibility
+
 The app works best in modern browsers:
 - Chrome/Edge (latest)
 - Firefox (latest)
 - Safari (latest)
 
-## Security Note
-This app uses Supabase Auth for secure authentication. Passwords are properly hashed and stored securely. Session tokens are managed automatically with JWT tokens.
+## Development
+
+### Backend API (Optional)
+
+The app includes a Deno-based backend API in `/supabase/functions/server/` that can be deployed as a Supabase Edge Function. This is optional as the frontend can communicate directly with Supabase.
+
+To deploy the Edge Function:
+```bash
+supabase functions deploy server
+```
+
+## Support
+
+For issues or questions, please check:
+- Supabase documentation: [supabase.com/docs](https://supabase.com/docs)
+- Project repository issues
+
