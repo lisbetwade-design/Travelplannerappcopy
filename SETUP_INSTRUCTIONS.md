@@ -81,7 +81,7 @@ The app will be available at `http://localhost:5173` (or another port if 5173 is
 ### Last-Minute Deals
 - Discover spontaneous travel opportunities
 
-## User Accounts
+## Authentication & Data Security
 
 The app supports secure user authentication:
 - Each account has a unique email/password
@@ -97,7 +97,10 @@ All data is stored securely in Supabase:
 - Trips are stored in the `trips` table
 - Time off dates are stored in the `time_off` table
 
-## Troubleshooting
+### Sign Up/Sign In Issues
+- Check that your Supabase URL and keys are correct
+- Verify the Edge Function is deployed and accessible
+- Check browser console for detailed error messages
 
 ### Connection Issues
 - Ensure your `.env` file has the correct Supabase credentials

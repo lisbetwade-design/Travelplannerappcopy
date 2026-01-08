@@ -5,6 +5,7 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { countries } from "../data/holidays";
+import { supabase, API_BASE_URL } from "../../lib/supabase";
 
 interface OnboardingProps {
   onSignUp: (email: string, password: string, data: { country: string; timeOffDates: Date[]; totalPTODays: number }) => Promise<void>;
@@ -29,10 +30,21 @@ export function Onboarding({ onSignUp, onSignIn }: OnboardingProps) {
         // For sign up, go to step 2 to collect country and PTO
         setStep(2);
       } else {
-        // For sign in, directly call onSignIn with loading state
+        // For sign in, use Supabase Auth
         setIsLoading(true);
         try {
-          await onSignIn(email, password);
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          if (data.session) {
+            onSignIn(data.session);
+          }
         } catch (error) {
           console.error("Sign in error:", error);
           setError(error instanceof Error ? error.message : "Sign in failed. Please try again.");

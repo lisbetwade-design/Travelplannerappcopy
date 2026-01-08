@@ -14,7 +14,7 @@ export default function App() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   // Load current user session on mount
   useEffect(() => {
@@ -296,6 +296,15 @@ export default function App() {
       if (!user) {
         throw new Error("No authenticated user");
       }
+      
+      if (tripToDelete && userData) {
+        // Calculate which dates were used by this trip
+        const tripDates: Date[] = [];
+        const currentDate = new Date(tripToDelete.startDate);
+        while (currentDate <= tripToDelete.endDate) {
+          tripDates.push(new Date(currentDate));
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
 
       // Insert new time off dates
       const timeOffRecords = dates.map(date => ({
