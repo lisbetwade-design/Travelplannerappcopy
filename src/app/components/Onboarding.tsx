@@ -5,10 +5,11 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { countries } from "../data/holidays";
+import { supabase, API_BASE_URL } from "../../lib/supabase";
 
 interface OnboardingProps {
-  onSignUp: (email: string, password: string, data: { country: string; timeOffDates: Date[]; totalPTODays: number }) => void;
-  onSignIn: (email: string, password: string) => Promise<void>;
+  onSignUp: (session: any, data: { country: string; totalPTODays: number }) => void;
+  onSignIn: (session: any) => void;
 }
 
 export function Onboarding({ onSignUp, onSignIn }: OnboardingProps) {
@@ -29,10 +30,21 @@ export function Onboarding({ onSignUp, onSignIn }: OnboardingProps) {
         // For sign up, go to step 2 to collect country and PTO
         setStep(2);
       } else {
-        // For sign in, directly call onSignIn with loading state
+        // For sign in, use Supabase Auth
         setIsLoading(true);
         try {
-          await onSignIn(email, password);
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          if (data.session) {
+            onSignIn(data.session);
+          }
         } catch (error) {
           console.error("Sign in error:", error);
           setError(error instanceof Error ? error.message : "Sign in failed. Please try again.");
@@ -42,12 +54,44 @@ export function Onboarding({ onSignUp, onSignIn }: OnboardingProps) {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (country && totalPTODays) {
       setIsLoading(true);
       setError(null);
       try {
-        onSignUp(email, password, { country, timeOffDates: [], totalPTODays: parseInt(totalPTODays) });
+        // Call the backend signup endpoint
+        const response = await fetch(`${API_BASE_URL}/signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            country,
+            totalPTODays: parseInt(totalPTODays),
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Sign up failed');
+        }
+
+        // Now sign in the user
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data.session) {
+          onSignUp(data.session, { country, totalPTODays: parseInt(totalPTODays) });
+        }
       } catch (error) {
         console.error("Sign up error:", error);
         setError(error instanceof Error ? error.message : "Sign up failed. Please try again.");
